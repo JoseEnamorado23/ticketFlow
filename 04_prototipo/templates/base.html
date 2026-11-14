@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}TicketFlow{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body>
+{% import "_m.html" as m with context %}
+<div class="layout">
+<aside>
+  <div class="brand"><i>{{ m.ico('bolt') }}</i>TicketFlow</div>
+  {% set ep = request.endpoint %}
+  <nav>
+  <a href="{{ url_for('panel') }}" class="{{ 'on' if ep=='panel' }}">{{ m.ico('panel') }}<span>Panel de control</span></a>
+  <a href="{{ url_for('lista') }}" class="{{ 'on' if ep in ('lista','detalle') }}">{{ m.ico('tickets') }}<span>Tickets</span></a>
+  <a href="{{ url_for('nuevo') }}" class="{{ 'on' if ep=='nuevo' }}">{{ m.ico('plus') }}<span>Nuevo ticket</span></a>
+  <a href="{{ url_for('alertas') }}" class="{{ 'on' if ep=='alertas' }}">{{ m.ico('shield') }}<span>Alertas inteligentes</span></a>
+  {% if es_sup %}<small>Supervisión</small>
+  <a href="{{ url_for('importar_csv') }}" class="{{ 'on' if ep=='importar_csv' }}">{{ m.ico('down') }}<span>Importar datos</span></a>
+  <a href="{{ url_for('riesgo') }}" class="{{ 'on' if ep=='riesgo' }}">{{ m.ico('alert') }}<span>Cuentas en riesgo</span></a>
+  <a href="{{ url_for('ver_bitacora') }}" class="{{ 'on' if ep=='ver_bitacora' }}">{{ m.ico('log') }}<span>Bitácora</span></a>{% endif %}
+  {% if user and user.rol == 'admin' %}<small>Administración</small>
+  <a href="{{ url_for('usuarios') }}" class="{{ 'on' if ep=='usuarios' }}">{{ m.ico('users') }}<span>Usuarios</span></a>{% endif %}
+  </nav>
+  {% if user %}<div class="me">
+    <div class="who"><div class="avatar">{{ user.nombre[:1] }}{{ user.nombre.split()[-1][:1] if user.nombre.split()|length > 1 else '' }}</div>
+      <div><b>{{ user.nombre }}</b><span class="badge r-{{ user.rol }}">{{ ROL_ES[user.rol] }}</span></div></div>
+    <form method="post" action="{{ url_for('logout') }}">{{ m.csrf_input() }}<button class="ghost">Cerrar sesión</button></form></div>{% endif %}
+</aside>
+<main>
+{% for cat,txt in get_flashed_messages(with_categories=true) %}<div class="msg {{cat}}">{{txt}}</div>{% endfor %}
+{% block c %}{% endblock %}
+<p class="clock">Datos de demostración · fecha de referencia del sistema: <b>{{ (ahora or '')[:10] }}</b> (el dataset termina en esa fecha, por eso los tiempos se calculan contra ella)</p>
+</main></div><script src="{{ url_for('static', filename='app.js') }}"></script></body></html>

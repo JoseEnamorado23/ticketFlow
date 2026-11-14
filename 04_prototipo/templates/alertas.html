@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% block title %}Alertas inteligentes · TicketFlow{% endblock %}{% block c %}
+{% import "_m.html" as m with context %}
+<div class="top"><div><h1>Alertas inteligentes</h1><p class="sub">La app revisa cada ticket abierto contra su SLA y te dice qué hacer primero, con la razón de cada recomendación.</p></div></div>
+
+<div class="help"><b>Cómo se decide (reglas, sin IA):</b> un ticket está <b>en riesgo</b> cuando ya consumió {{ umbral }}% o más del tiempo de su SLA, y <b>vencido</b> cuando lo superó. La acción depende de si tiene responsable. Las mismas entradas siempre dan la misma recomendación, y puedes verificarla a mano.</div>
+
+<div class="kpis">
+  <div class="card kpi bad"><div class="kh"><em>SLA vencido</em><div class="chip">{{ m.ico('alert') }}</div></div><b>{{ '{:,}'.format(resumen.vencido) }}</b><span>Ya superaron el tiempo prometido</span></div>
+  <div class="card kpi warn"><div class="kh"><em>En riesgo (≥ {{ umbral }}%)</em><div class="chip">{{ m.ico('clock') }}</div></div><b>{{ '{:,}'.format(resumen.en_riesgo) }}</b><span>Por vencer: actuar hoy</span></div>
+</div>
+
+<div class="card flush scroll"><table>
+<tr><th>Ticket</th><th>Prioridad</th><th>SLA consumido</th><th>Responsable</th><th>Acción recomendada</th><th>Por qué</th></tr>
+{% for a in alertas %}<tr>
+<td><a href="{{ url_for('detalle', tid=a.ticket_id) }}">{{ a.ticket_id }}</a></td><td>{{ m.pri(a.priority) }}</td>
+<td style="min-width:130px"><div class="bar {{ 'bad' if a.estado_sla=='vencido' else 'warn' }}"><i style="width:{{ [a.consumo*100,100]|min|round|int }}%"></i></div><small class="tag">{% if a.consumo > 9.99 %}+999%{% else %}{{ (a.consumo*100)|round|int }}%{% endif %}{{ ' · vencido' if a.estado_sla=='vencido' }}</small></td>
+<td>{{ a.responsable or '—' }}</td><td><b>{{ a.accion }}</b></td><td class="tag">{{ a.motivo }}</td></tr>
+{% else %}<tr><td colspan="6" class="empty">Sin alertas: todos los tickets abiertos van dentro de su SLA.</td></tr>{% endfor %}</table>
+{% if alertas|length >= 150 %}<div class="pager"><span>Se muestran las 150 más urgentes de {{ '{:,}'.format(resumen.vencido + resumen.en_riesgo) }}. Orden: en riesgo primero, luego por prioridad.</span></div>{% endif %}</div>
+
+{% if es_sup %}<div class="card pn" style="margin-top:16px"><div class="ch"><div><h2>Cuentas para contactar de forma proactiva</h2><p class="sub">Regla: {{ reab }} o más reaperturas y todavía con tickets abiertos</p></div></div>
+<div class="rank">{% for r in cuentas %}<a class="rk" style="grid-template-columns:1fr auto auto" href="{{ url_for('lista', customer=r.customer_id) }}"><span class="lb">{{ r.customer_id }}</span>
+<span class="badge p-urgent">{{ r.reaperturas }} reaperturas</span><span class="tag">{{ r.abiertos }} abiertos</span></a>
+{% else %}<p class="sub">Ninguna cuenta cumple la regla.</p>{% endfor %}</div></div>{% endif %}
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}{% block title %}Tickets · TicketFlow{% endblock %}{% block c %}
+{% import "_m.html" as m with context %}
+<div class="top"><div><h1>Tickets</h1><p class="sub">{{ '{:,}'.format(total) }} resultados · usa los filtros para acotar la búsqueda</p></div>
+<div class="acts">{% if es_sup %}<a class="btn ghost" href="{{ url_for('exportar', **args) }}">{{ m.ico('down') }}Exportar CSV</a>{% endif %}<a class="btn" href="{{ url_for('nuevo') }}">{{ m.ico('plus') }}Nuevo ticket</a></div></div>
+
+<form class="filters card" method="get">
+<input type="search" name="q" placeholder="Buscar por ID, cliente o mensaje…" value="{{ f.q or '' }}">
+<select name="status" aria-label="Estado"><option value="">Todos los estados</option>{% for k,l in ESTADOS.items() %}<option value="{{k}}" {{ 'selected' if f.status==k }}>{{l}}</option>{% endfor %}</select>
+<select name="priority" aria-label="Prioridad"><option value="">Toda prioridad</option>{% for k,l in PRIORIDADES.items() %}<option value="{{k}}" {{ 'selected' if f.priority==k }}>{{l}}</option>{% endfor %}</select>
+<select name="area" aria-label="Área"><option value="">Todas las áreas</option>{% for a in areas %}<option value="{{a}}" {{ 'selected' if f.area==a }}>{{a|es}}</option>{% endfor %}</select>
+<select name="sla" aria-label="Plan SLA"><option value="">Todo plan SLA</option>{% for a in ['platinum','gold','standard'] %}<option value="{{a}}" {{ 'selected' if f.sla==a }}>{{a|es}}</option>{% endfor %}</select>
+<select name="asignado" aria-label="Responsable"><option value="">Cualquier responsable</option><option value="me" {{ 'selected' if f.asignado=='me' }}>Mis tickets</option>
+<option value="none" {{ 'selected' if f.asignado=='none' }}>Sin asignar</option>
+{% for a in agentes %}<option value="{{a.user_id}}" {{ 'selected' if f.asignado==a.user_id|string }}>{{a.nombre}}</option>{% endfor %}</select>
+<select name="orden" aria-label="Orden"><option value="recientes">Más recientes primero</option><option value="antiguos" {{ 'selected' if f.orden=='antiguos' }}>Más antiguos primero</option>
+<option value="prioridad" {{ 'selected' if f.orden=='prioridad' }}>Por prioridad</option></select>
+<label><input type="checkbox" name="vencidos" value="1" {{ 'checked' if f.vencidos }}> Solo SLA vencido</label>
+<label><input type="checkbox" name="reabiertos" value="1" {{ 'checked' if f.reabiertos }}> Solo reabiertos</label>
+<button>Aplicar filtros</button><a class="btn ghost" href="{{ url_for('lista') }}">Limpiar</a></form>
+
+<div class="card flush scroll"><table>
+<tr><th>Ticket</th><th>Cliente</th><th>Área</th><th>Prioridad</th><th>Estado</th><th>Responsable</th><th>Tiempo SLA</th><th>Creado</th></tr>
+{% for t in tickets %}<tr>
+<td><a href="{{ url_for('detalle', tid=t.ticket_id) }}">{{ t.ticket_id }}</a>{% if t.reopened %} <span class="badge plain" title="Este ticket fue reabierto">↺</span>{% endif %}</td>
+<td>{{ t.customer_id }}</td><td class="tag">{{ t.product_area|es }}</td><td>{{ m.pri(t.priority) }}</td><td>{{ m.est(t.status) }}</td>
+<td>{{ t.asignado_nombre or '—' }}</td>
+<td>{% if t.vencido %}<span class="badge vence">Vencido</span>{% elif t.status in ('open','in_progress','on_hold') %}<span class="dot">{{ (t.objetivo - t.horas_abierto)|horas }} restantes</span>{% else %}<span class="dot">—</span>{% endif %}</td>
+<td class="tag">{{ t.created_at[:10] }}</td></tr>
+{% else %}<tr><td colspan="8" class="empty">Ningún ticket coincide con los filtros.<br><a href="{{ url_for('lista') }}">Limpiar filtros</a></td></tr>{% endfor %}</table>
+<div class="pager"><span>Página {{ pag }} de {{ paginas }}</span><span>
+{% if pag > 1 %}<a class="btn ghost" href="{{ url_for('lista', page=pag-1, **args) }}">← Anterior</a>{% endif %}
+{% if pag < paginas %}<a class="btn ghost" href="{{ url_for('lista', page=pag+1, **args) }}">Siguiente →</a>{% endif %}</span></div></div>
+{% endblock %}

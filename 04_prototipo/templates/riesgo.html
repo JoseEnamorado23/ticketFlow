@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block title %}Cuentas en riesgo · TicketFlow{% endblock %}{% block c %}
+<div class="top"><div><h1>Cuentas en riesgo</h1><p class="sub">Clientes con más de un ticket reabierto: su problema no se resuelve de forma definitiva.</p></div></div>
+<p class="help"><b>Nivel:</b> Medio = 2 reaperturas · Alto = 3 · Crítico = 4 o más. Haz clic en el cliente para ver sus tickets reabiertos.</p>
+<div class="card flush scroll"><table><tr><th>Cliente</th><th class="num">Reaperturas</th><th class="num">Tickets totales</th><th class="num">Abiertos ahora</th><th>Nivel</th></tr>
+{% for r in filas %}<tr><td><a href="{{ url_for('lista', customer=r.customer_id, reabiertos=1) }}">{{ r.customer_id }}</a></td>
+<td class="num"><b>{{ r.reaperturas }}</b></td><td class="num">{{ r.total }}</td><td class="num">{{ r.abiertos }}</td>
+<td>{% if r.reaperturas >= 4 %}<span class="badge p-urgent">Crítico</span>{% elif r.reaperturas == 3 %}<span class="badge p-high">Alto</span>{% else %}<span class="badge p-medium">Medio</span>{% endif %}</td></tr>
+{% else %}<tr><td colspan="5" class="empty">Sin cuentas en riesgo.</td></tr>{% endfor %}</table></div>
+{% endblock %}

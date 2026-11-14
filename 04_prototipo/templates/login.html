@@ -1,0 +1,28 @@
+{% import "_m.html" as m with context %}<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Acceso · TicketFlow</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body>
+<div class="login">
+<section class="hero">
+  <div class="brand"><i>{{ m.ico('bolt') }}</i>TicketFlow</div>
+  <div>
+    <h2>Soporte técnico bajo control, ticket por ticket.</h2>
+    <p>Prioriza lo urgente, vigila los acuerdos de servicio (SLA) y detecta a tiempo a los clientes con problemas recurrentes.</p>
+    <ul>
+      <li>{{ m.ico('clock') }}<span>Ve qué tickets están por vencer o ya vencieron su SLA.</span></li>
+      <li>{{ m.ico('shield') }}<span>Cada cambio de estado se valida y queda registrado en la bitácora.</span></li>
+      <li>{{ m.ico('alert') }}<span>Identifica cuentas con tickets reabiertos que requieren atención.</span></li>
+    </ul>
+  </div>
+  <small>Proyecto Integrador · Universidad Cooperativa de Colombia</small>
+</section>
+<section class="panel"><div>
+<h1>Iniciar sesión</h1><p class="sub">Ingresa con tu usuario del equipo de soporte.</p>
+{% for cat,txt in get_flashed_messages(with_categories=true) %}<div class="msg {{cat}}">{{txt}}</div>{% endfor %}
+<form method="post" class="form"><input type="hidden" name="_csrf" value="{{ csrf }}">
+<label>Usuario<input name="usuario" id="u" autofocus required autocomplete="username"></label>
+<label>Contraseña<input name="password" id="p" type="password" required autocomplete="current-password"></label>
+<button>Entrar</button></form>
+<div class="demo"><b>Cuentas de demostración · clic para rellenar</b>
+<table>{% for d in demo %}<tr class="fill" data-fill="{{d.usuario}}"><td><code>{{d.usuario}}</code></td><td>{{d.nombre}}</td><td><span class="badge plain r-{{d.rol}}">{{ ROL_ES[d.rol] }}</span></td></tr>{% endfor %}</table>
+<p class="sub" style="margin:8px 0 0">Contraseña = usuario + 123. El rol define qué puedes ver y hacer.</p></div>
+</div></section></div><script src="{{ url_for('static', filename='app.js') }}"></script></body></html>

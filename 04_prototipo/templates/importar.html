@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% block title %}Importar datos · TicketFlow{% endblock %}{% block c %}
+{% import "_m.html" as m with context %}
+<div class="top"><div><h1>Importar tickets (CSV)</h1><p class="sub">Los datos se limpian y validan antes de guardarse. Si subes el mismo archivo otra vez, no se crean registros dobles.</p></div></div>
+
+<div class="help"><b>Qué hace la app con cada fila:</b> 1) limpia espacios y mayúsculas · 2) valida formato, catálogos, rangos y reglas entre campos · 3) si el <code>ticket_id</code> ya existe, lo cuenta como «ya estaba» y lo ignora · 4) si no es válida, la rechaza con el motivo y no la guarda. Todo ocurre en una sola transacción.</div>
+
+<div class="card" style="max-width:720px"><form method="post" enctype="multipart/form-data" class="form">{{ m.csrf_input() }}
+<label>Archivo CSV <small>(UTF-8, máx. 5 MB, columnas del dataset)</small><input type="file" name="archivo" accept=".csv" required></label>
+<div><button>Procesar archivo</button></div></form></div>
+
+{% if r %}<div class="kpis" style="margin-top:16px">
+<div class="card kpi"><div class="kh"><em>Filas que entran</em></div><b>{{ '{:,}'.format(r.entran) }}</b></div>
+<div class="card kpi"><div class="kh"><em>Duplicadas en el archivo</em></div><b>{{ r.repetidas_archivo }}</b></div>
+<div class="card kpi good"><div class="kh"><em>Nuevos guardados</em></div><b>{{ '{:,}'.format(r.nuevos) }}</b></div>
+<div class="card kpi warn"><div class="kh"><em>Ya estaban (no se duplican)</em></div><b>{{ '{:,}'.format(r.existentes) }}</b></div>
+<div class="card kpi bad"><div class="kh"><em>Rechazadas</em></div><b>{{ r.rechazados }}</b></div></div>
+{% if r.motivos %}<div class="card flush scroll"><table><tr><th>Fila</th><th>Ticket</th><th>Motivo del rechazo</th></tr>
+{% for f,t,mo in r.motivos[:30] %}<tr><td>{{ f }}</td><td>{{ t or '—' }}</td><td class="tag">{{ mo }}</td></tr>{% endfor %}</table></div>{% endif %}{% endif %}
+
+{% if rechazos %}<div class="card pn" style="margin-top:16px"><div class="ch"><div><h2>Últimos rechazos registrados</h2><p class="sub">Quedan guardados para auditoría; no se pierden datos sin explicación.</p></div></div>
+<table><tr><th>Archivo</th><th>Fila</th><th>Ticket</th><th>Motivo</th></tr>{% for x in rechazos %}<tr><td class="tag">{{ x.archivo }}</td><td>{{ x.fila }}</td><td>{{ x.ticket_id or '—' }}</td><td class="tag">{{ x.motivo }}</td></tr>{% endfor %}</table></div>{% endif %}
+{% endblock %}

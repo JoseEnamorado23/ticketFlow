@@ -1,0 +1,82 @@
+Ticket de prueba TCKT_999999 creado en estado: open
+
+=== 1. Saltos ilegales de estado ===
+
+> open -> closed (saltando in_progress y resolved)
+  RECHAZADO por la base: TRANSICION_INVALIDA
+  La app muestra: "No se puede pasar el ticket a ese estado desde el estado actual."
+
+> open -> resolved (saltando in_progress)
+  RECHAZADO por la base: TRANSICION_INVALIDA
+  La app muestra: "No se puede pasar el ticket a ese estado desde el estado actual."
+
+> open -> closed aunque ya se registre una resolución
+  RECHAZADO por la base: TRANSICION_INVALIDA
+  La app muestra: "No se puede pasar el ticket a ese estado desde el estado actual."
+
+=== 2. Camino legal ===
+
+> open -> in_progress
+  ACEPTADO
+
+> in_progress -> resolved SIN registrar resolución
+  RECHAZADO por la base: RESUELTO_SIN_RESOLUCION
+  La app muestra: "Para resolver o cerrar el ticket primero registre la resolución."
+
+> in_progress -> resolved con resolución pero csat_score = 9
+  RECHAZADO por la base: CHECK constraint failed: csat_score BETWEEN 0 AND 5
+  La app muestra: "La calificación del cliente debe estar entre 0 y 5."
+  Estado después del rechazo: in_progress (no quedó nada a medias)
+
+> in_progress -> resolved con resolución válida (csat 4), en una transacción
+  ACEPTADO
+
+> resolved -> closed
+  ACEPTADO
+
+> Borrar la resolución de un ticket cerrado
+  RECHAZADO por la base: RESUELTO_SIN_RESOLUCION
+  La app muestra: "Para resolver o cerrar el ticket primero registre la resolución."
+
+> closed -> open (reabrir un ticket ya cerrado)
+  RECHAZADO por la base: TRANSICION_INVALIDA
+  La app muestra: "No se puede pasar el ticket a ese estado desde el estado actual."
+
+=== 3. Historial que guardó la base ===
+  open -> in_progress
+  in_progress -> resolved
+  resolved -> closed
+
+=== 4. Otros rechazos directos en la base (sin pasar por el programa) ===
+
+> Ticket de un cliente que no existe
+  RECHAZADO por la base: FOREIGN KEY constraint failed
+  La app muestra: "El cliente no existe."
+
+> Región no permitida ('XX')
+  RECHAZADO por la base: CHECK constraint failed: region IS NULL OR region IN ('NA','EU','MEA','LATAM','APAC')
+  La app muestra: "La región debe ser NA, EU, MEA, LATAM o APAC."
+
+> Insertar un ticket directamente como resolved sin resolución
+  RECHAZADO por la base: RESUELTO_SIN_RESOLUCION
+  La app muestra: "Para resolver o cerrar el ticket primero registre la resolución."
+
+=== 5. Revisión de calidad sobre toda la base ===
+  Tickets resolved/closed sin resolución: 0
+  Resoluciones con csat fuera de 0-5: 0
+  Tickets con región no permitida: 0
+  Tickets abiertos con resolución: 0
+  Tickets con región NA (antes leída como nulo): 19,998
+  Tickets con región realmente nula: 0
+
+=== 6. Índice compuesto (reopened, customer_id) ===
+   SEARCH tickets USING COVERING INDEX idx_tickets_reopened_cliente (reopened=?)
+   USE TEMP B-TREE FOR ORDER BY
+  Tiempo promedio: 1.7 ms
+  Top 3: [('CUST_04401', 5), ('CUST_01354', 4), ('CUST_02329', 4)]
+
+=== 7. Volumen ===
+  Tickets: 100005
+  Rango de fechas: ('2022-01-01T00:16:58', '2026-10-20T09:15:00')
+  Tickets por año: [('2022', 24603), ('2023', 25165), ('2024', 25070), ('2025', 25162), ('2026', 5)]
+  Tamaño del archivo .db: 41.8 MB

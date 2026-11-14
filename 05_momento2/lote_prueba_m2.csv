@@ -1,0 +1,16 @@
+ticket_id,created_at,customer_id,customer_segment,channel,product_area,issue_type,priority,status,sla_plan,initial_message,agent_first_reply,resolution_summary,resolution_time_hours,reopened,customer_sentiment,csat_score,has_attachment,platform,region
+TCKT_900001,2026-10-20T09:15:00,CUST_00861,enterprise,email,billing,billing_problem,high,open,gold,I was charged twice this month.,We are reviewing your billing.,,,0,,,0,web,LATAM
+TCKT_900001,2026-10-20T09:15:00,CUST_00861,enterprise,email,billing,billing_problem,high,open,gold,I was charged twice this month.,We are reviewing your billing.,,,0,,,0,web,LATAM
+TCKT_900002,2026-10-20T09:15:00,CUST_00861,enterprise,email,billing,billing_problem,high,in_progress,gold,I was charged twice this month.,We are reviewing your billing.,,,0,,,0,web,NA
+TCKT_900003,2026-10-20T09:15:00,CUST_00861,enterprise,email,billing,billing_problem,high,resolved,gold,I was charged twice this month.,We are reviewing your billing.,Refund issued.,6.5,0,neutral,4,0,web,LATAM
+  tckt_900004 ,2026-10-20T09:15:00,CUST_99999,enterprise,email,billing,billing_problem, Urgent,OPEN,gold,I was charged twice this month.,We are reviewing your billing.,,,0,,,0,web,eu
+TCKT_900005,2026-10-20T09:15:00,CUST_00861,enterprise,email,billing,billing_problem,high,resolved,gold,I was charged twice this month.,We are reviewing your billing.,Refund issued.,3,0,neutral,7,0,web,LATAM
+TCKT_900006,2026-10-20T09:15:00,CUST_00861,enterprise,email,billing,billing_problem,high,open,gold,I was charged twice this month.,We are reviewing your billing.,,,0,,,0,web,XX
+TCKT_900007,2026-10-20T09:15:00,CUST_00861,enterprise,email,billing,billing_problem,high,resolved,gold,I was charged twice this month.,We are reviewing your billing.,,,0,,,0,web,LATAM
+TCKT_900008,2026-10-20T09:15:00,CUST_00861,enterprise,email,billing,billing_problem,urgentt,open,gold,I was charged twice this month.,We are reviewing your billing.,,,0,,,0,web,LATAM
+TCKT_900009,2026-10-20T09:15:00,,enterprise,email,billing,billing_problem,high,open,gold,I was charged twice this month.,We are reviewing your billing.,,,0,,,0,web,LATAM
+TCKT_900010,2026-10-20T09:15:00,CUST_00861,enterprise,email,billing,billing_problem,high,closed,gold,I was charged twice this month.,We are reviewing your billing.,,,0,,,0,web,LATAM
+TCKT_900011,2026-10-20T09:15:00,CUST_00861,enterprise,email,billing,billing_problem,high,resolved,gold,I was charged twice this month.,We are reviewing your billing.,Refund issued.,-2,0,neutral,3,0,web,LATAM
+TCKT_900012,2026-13-45,CUST_00861,enterprise,email,billing,billing_problem,high,open,gold,I was charged twice this month.,We are reviewing your billing.,,,0,,,0,web,LATAM
+TCKT_900013,2026-10-20T09:15:00,CUST_00861,enterprise,email,billing,billing_problem,high,open,gold,I was charged twice this month.,We are reviewing your billing.,Refund issued.,2,0,neutral,,0,web,LATAM
+TCKT_900001,2026-10-20T09:15:00,CUST_00861,enterprise,email,billing,billing_problem,low,open,gold,I was charged twice this month.,We are reviewing your billing.,,,0,,,0,web,LATAM

@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% block title %}Nuevo ticket · TicketFlow{% endblock %}{% block c %}
+{% import "_m.html" as m with context %}
+<div class="top"><div><h1>Nuevo ticket</h1><p class="sub">Registra una solicitud de un cliente. Entra como «Abierto» y el plan SLA define su tiempo límite.</p></div></div>
+<div class="card" style="max-width:760px">
+<form method="post" class="form">{{ m.csrf_input() }}
+<h2>Cliente</h2>
+<div class="row2"><label>ID del cliente<input name="customer_id" placeholder="CUST_00861" value="{{ v.customer_id or '' }}" maxlength="10" required pattern="CUST_[0-9]{5}" title="Formato CUST_00000"></label>
+<label>Segmento<select name="customer_segment">{% for s in ['individual','small_business','education','enterprise','non_profit'] %}<option value="{{s}}">{{s|es}}</option>{% endfor %}</select></label></div>
+<div class="row2"><label>Plan SLA <small>(define el tiempo límite)</small><select name="sla_plan">{% for s in ['standard','gold','platinum'] %}<option value="{{s}}">{{s|es}}</option>{% endfor %}</select></label>
+<label>Región<select name="region"><option value="">(sin dato)</option>{% for s in ['NA','EU','LATAM','APAC','MEA'] %}<option>{{s}}</option>{% endfor %}</select></label></div>
+<h2 style="margin-top:6px">Problema</h2>
+<div class="row2"><label>Área del producto<select name="product_area">{% for s in opc.product_area %}<option value="{{s}}">{{s|es}}</option>{% endfor %}</select></label>
+<label>Tipo de problema<select name="issue_type">{% for s in opc.issue_type %}<option value="{{s}}">{{s|es}}</option>{% endfor %}</select></label></div>
+<div class="row2"><label>Canal de entrada<select name="channel">{% for s in opc.channel %}<option value="{{s}}">{{s|es}}</option>{% endfor %}</select></label>
+<label>Prioridad<select name="priority"><option value="auto" {{ 'selected' if not v.priority or v.priority=='auto' }}>Automática (sugerida por reglas)</option>{% for k,l in PRIORIDADES.items() %}<option value="{{k}}" {{ 'selected' if v.priority==k }}>{{l}}</option>{% endfor %}</select><small>«Automática» aplica reglas por tipo de problema y mensaje, y te dice por qué.</small></label></div>
+<label>Mensaje del cliente<textarea name="initial_message" rows="4" required maxlength="2000" placeholder="Describe el problema tal como lo reportó el cliente">{{ v.initial_message or '' }}</textarea></label>
+<label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="checkbox" name="tomar" value="1" checked> Asignármelo a mí</label>
+<div class="actions" style="margin-top:0"><button>Crear ticket</button><a class="btn ghost" href="{{ url_for('lista') }}">Cancelar</a></div></form>
+<p class="sub" style="margin:14px 0 0">La base de datos valida el ticket con las reglas de integridad del modelo (catálogos, campos obligatorios y claves).</p></div>
+{% endblock %}

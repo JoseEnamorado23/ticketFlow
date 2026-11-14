@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% block title %}Error {{ code }} · TicketFlow{% endblock %}{% block c %}
+<div class="card err" style="max-width:520px;margin:40px auto"><div class="code">{{ code }}</div><h1 style="justify-content:center;margin:10px 0 6px">{{ 'Acceso restringido' if code==403 else ('No encontrado' if code==404 else 'No se pudo completar') }}</h1>
+<p class="sub">{{ msg }}</p><a class="btn" href="{{ url_for('panel') }}">Volver al panel</a></div>
+{% endblock %}

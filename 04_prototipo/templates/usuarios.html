@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% block title %}Usuarios · TicketFlow{% endblock %}{% block c %}
+{% import "_m.html" as m with context %}
+<div class="top"><div><h1>Usuarios</h1><p class="sub">Gestiona las cuentas del equipo y sus niveles de acceso.</p></div></div>
+<p class="help"><b>Niveles:</b> Agente trabaja sus tickets · Supervisor además asigna, reabre y ve riesgo y bitácora · Administrador además gestiona usuarios.</p>
+<div class="card flush scroll"><table><tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th class="num">Abiertos</th><th>Estado</th><th></th></tr>
+{% for u in filas %}<tr><td><code>{{ u.usuario }}</code></td><td>{{ u.nombre }}</td>
+<td>{% if u.user_id == user.user_id %}<span class="badge plain r-{{u.rol}}">{{ ROL_ES[u.rol] }}</span> <span class="dot">(tú)</span>
+{% else %}<form method="post" style="display:flex;gap:6px">{{ m.csrf_input() }}<input type="hidden" name="accion" value="rol"><input type="hidden" name="user_id" value="{{u.user_id}}">
+<select name="rol" data-autosubmit aria-label="Rol">{% for k,l in ROL_ES.items() %}<option value="{{k}}" {{ 'selected' if u.rol==k }}>{{l}}</option>{% endfor %}</select></form>{% endif %}</td>
+<td class="num">{{ u.abiertos }}</td><td><span class="badge {{ 's-resolved' if u.activo else '' }}">{{ 'Activo' if u.activo else 'Desactivado' }}</span></td>
+<td class="num">{% if u.user_id != user.user_id %}<form method="post">{{ m.csrf_input() }}<input type="hidden" name="accion" value="activo"><input type="hidden" name="user_id" value="{{u.user_id}}">
+<button class="ghost sm">{{ 'Desactivar' if u.activo else 'Activar' }}</button></form>{% endif %}</td></tr>{% endfor %}</table></div>
+
+<div class="card" style="max-width:700px;margin-top:16px"><h2>Crear usuario</h2><p class="sub">La cuenta queda activa de inmediato.</p>
+<form method="post" class="form">{{ m.csrf_input() }}<input type="hidden" name="accion" value="crear">
+<div class="row2"><label>Usuario<input name="usuario" required></label><label>Nombre completo<input name="nombre" required></label></div>
+<div class="row2"><label>Rol<select name="rol">{% for k,l in ROL_ES.items() %}<option value="{{k}}">{{l}}</option>{% endfor %}</select></label>
+<label>Contraseña <small>(mínimo 6 caracteres)</small><input name="password" type="password" required minlength="6"></label></div>
+<div><button>Crear usuario</button></div></form></div>
+{% endblock %}

@@ -1,0 +1,26 @@
+
+== synthetic_it_support_tickets.csv ==
+Registros que entran:          100,000
+Duplicados exactos eliminados:       0
+Aceptados (nuevos guardados):  100,000
+Ya estaban en la base:               0
+Rechazados:                          0
+
+== lote_prueba_m2.csv ==
+Registros que entran:               15
+Duplicados exactos eliminados:       1
+Aceptados (nuevos guardados):        4
+Ya estaban en la base:               0
+Rechazados:                         10
+   fila   7 TCKT_900005    -> csat_score fuera de 0-5 (7)
+   fila   8 TCKT_900006    -> región no permitida (XX)
+   fila   9 TCKT_900007    -> ticket resolved sin resolución
+   fila  10 TCKT_900008    -> priority fuera de catálogo (urgentt)
+   fila  11 TCKT_900009    -> ticket sin cliente
+   fila  12 TCKT_900010    -> ticket closed sin resolución
+   fila  13 TCKT_900011    -> tiempo de resolución negativo o inválido (-2)
+   fila  14 TCKT_900012    -> fecha de creación inválida (2026-13-45)
+   fila  15 TCKT_900013    -> ticket open con datos de resolución
+   fila  16 TCKT_900001    -> ticket_id repetido dentro del archivo
+
+Totales en la base: {'clientes': 10000, 'tickets': 100004, 'resoluciones': 60114, 'rechazos': 10}

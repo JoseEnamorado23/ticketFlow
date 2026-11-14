@@ -1,0 +1,58 @@
+
+======== PASO 3 · Datos: limpieza y carga sin duplicados ========
+Carga #1: {'Filas que entran': '15', 'Duplicadas en el archivo': '1', 'Nuevos guardados': '4', 'Ya estaban (no se duplican)': '0', 'Rechazadas': '10'}
+Carga #2: {'Filas que entran': '15', 'Duplicadas en el archivo': '1', 'Nuevos guardados': '0', 'Ya estaban (no se duplican)': '4', 'Rechazadas': '10'}
+Tickets antes: 100,002 · después de cargar DOS veces el mismo archivo: 100,006 (+4)
+Rechazos guardados para auditoría: 10
+   fila  7 TCKT_900005  -> csat_score fuera de 0–5 (7)
+   fila  8 TCKT_900006  -> región no permitida (XX)
+   fila  9 TCKT_900007  -> ticket resolved sin resolución
+   fila 10 TCKT_900008  -> priority fuera de catálogo (urgentt)
+   fila 11 TCKT_900009  -> customer_id vacío
+   fila 12 TCKT_900010  -> status fuera de catálogo (closed)
+
+======== PASO 3b · Duplicado al crear a mano ========
+1er intento: ['Ticket TCKT_900005 creado. Prioridad automática: Alta (tipo de problema «billing_problem»).']
+2do intento: ['Ya existe un ticket abierto de este cliente con el mismo problema y mensaje. No se creó un duplicado.']
+
+======== PASO 4 · Seguridad: código metido por formularios ========
+Guardado en la base (texto inerte): <script>alert("xss")</script><img src=x onerror=alert(1)>
+¿El HTML contiene un <script> real sin escapar?: False
+Así lo recibe el navegador: &lt;script&gt;alert(&#34;xss&#34;)&lt;/script&gt;
+Cabecera CSP: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src ...
+Inyección SQL en el login: RECHAZADA -> ['Usuario o contraseña incorrectos.']
+Inyección SQL en el buscador: HTTP 200 · se trata como texto: True
+POST sin token CSRF: HTTP 400
+
+======== PASO 4b · Seguridad: contraseñas ========
+admin       clave real: admin123       guardado: scrypt:32768:8:1$kkQlji7kb0VLcQca$d0acf101c2464e...
+supervisor  clave real: supervisor123  guardado: scrypt:32768:8:1$a7oIIYDtrUmt7Jzu$59899f6a729774...
+luis        clave real: luis123        guardado: scrypt:32768:8:1$LwXKwyrwrinf2ibS$4137ce977d3e96...
+Clave correcta verifica: True · clave incorrecta: False
+¿Aparece 'luis123' en la base?: False
+Tras 7 intentos fallidos seguidos: HTTP 429 ['Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo.']
+
+======== PASO 5 · Inteligencia: ¿regla o IA? ========
+Asociación (V de Cramér: 0 = ninguna, 1 = total) prioridad vs tipo de problema: 0.009
+Asociación prioridad vs texto del mensaje (100 mensajes distintos): 0.031
+-> Ni el tipo ni el mensaje predicen la prioridad en el dataset: un modelo de IA no tendría qué aprender.
+Reglas de prioridad automática (ejemplos):
+  security_concern  We need details about your data encryption         -> ('urgent', ['tipo de problema «security_concern»'])
+  account_access    My account was locked after multiple failed login  -> ('high', ['tipo de problema «account_access»', 'el mensaje indica bloqueo de acceso o cobro incorrecto'])
+  performance       Overall performance has degraded                   -> ('medium', ['tipo de problema «performance»'])
+  how_to            I have a general question                          -> ('low', ['tipo de problema «how_to»'])
+  bug               There was a data loss after the update             -> ('urgent', ['tipo de problema «bug»', 'el mensaje menciona una caída, fuga o acceso no autorizado'])
+Conteo de alertas SLA (todo el equipo): {'vencido': 39823, 'en_riesgo': 12}
+  TCKT_090638 urgent consumo 94% -> Priorizar hoy (ha consumido 94% del tiempo del SLA)
+  TCKT_094242 high   consumo 99% -> Priorizar hoy (ha consumido 99% del tiempo del SLA)
+  TCKT_053493 high   consumo 90% -> Priorizar hoy (ha consumido 90% del tiempo del SLA)
+
+======== PASO 6 · Dato malo: qué responde la app ========
+ID de cliente con formato incorrecto     -> HTTP 400 · ['El ID del cliente debe tener el formato CUST_00000.']
+Mensaje vacío                            -> HTTP 400 · ['El mensaje del cliente es obligatorio (máx. 2000 caracteres).']
+Prioridad inventada                      -> HTTP 400 · ['Prioridad no permitida.']
+Región fuera de catálogo                 -> HTTP 400 · ['Región no permitida.']
+Plan SLA inválido                        -> HTTP 400 · ['Valor no permitido en plan SLA.']
+Tickets antes/después de los 5 intentos malos: 100,008 / 100,008  (no se guardó nada)
+CSAT = 9 al resolver -> ['Horas (≥ 0) o CSAT (0 a 5) con formato inválido. No se guardó nada.']
+in_progress -> open (salto ilegal) -> ['RECHAZADO por la base de datos: Transicion ilegal de estado. No se guardó nada (rollback).']

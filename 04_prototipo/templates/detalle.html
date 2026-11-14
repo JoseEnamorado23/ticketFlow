@@ -1,0 +1,55 @@
+{% extends "base.html" %}{% block title %}{{ t.ticket_id }} · TicketFlow{% endblock %}{% block c %}
+{% import "_m.html" as m with context %}
+{% set abierto = t.status in ('open','in_progress','on_hold') %}
+<div class="top"><div><a class="crumb" href="{{ url_for('lista') }}">← Volver a tickets</a>
+<h1>{{ t.ticket_id }} {{ m.est(t.status) }} {{ m.pri(t.priority) }}{% if t.reopened %} <span class="badge plain">↺ Reabierto</span>{% endif %}</h1></div></div>
+
+<div class="steps" aria-label="Ciclo del ticket">
+  <div class="step done">1 · Creado</div>
+  <div class="step {{ 'done' if t.status!='open' else 'now' }}">2 · Abierto</div>
+  <div class="step {{ 'now' if t.status in ('in_progress','on_hold') else ('done' if not abierto else '') }}">3 · En atención</div>
+  <div class="step {{ 'done' if not abierto else '' }}">4 · {{ 'Cerrado sin acción' if t.status=='closed_no_action' else 'Resuelto' }}</div>
+</div>
+
+<div class="grid">
+<div class="card"><h2>Información del ticket</h2>
+{% if abierto %}<div class="sla-box {{ 'bad' if vencido else 'ok' }}">{{ m.ico('clock') }}<span>
+{% if vencido %}SLA vencido hace {{ (t.horas_abierto - t.objetivo)|horas }} · lleva {{ t.horas_abierto|horas }} abierto{% else %}Dentro del SLA · quedan {{ (t.objetivo - t.horas_abierto)|horas }} de {{ t.objetivo|horas }}{% endif %}</span></div>{% endif %}
+<table class="kv">
+<tr><th>Cliente</th><td><a href="{{ url_for('lista', customer=t.customer_id) }}">{{ t.customer_id }}</a> · {{ t.customer_segment|es }}</td></tr>
+<tr><th>Área</th><td>{{ t.product_area|es }}</td></tr>
+<tr><th>Tipo de problema</th><td>{{ t.issue_type|es }}</td></tr>
+<tr><th>Canal · región</th><td>{{ t.channel|es }} · {{ t.region or 'sin dato' }}</td></tr>
+<tr><th>Plan SLA</th><td>{{ t.sla_plan|es }} · objetivo de {{ t.objetivo|horas }}</td></tr>
+<tr><th>Creado</th><td>{{ t.created_at.replace('T',' ')[:16] }}</td></tr>
+<tr><th>Responsable</th><td>{{ t.asignado_nombre or 'Sin asignar' }}</td></tr>
+</table>
+<div class="msgbox"><small>Mensaje del cliente</small>{{ t.initial_message }}</div>
+{% if res %}<div class="msgbox" style="border-color:var(--ok)"><small>Resolución · {{ res.resolution_time_hours|horas }} · CSAT {{ res.csat_score if res.csat_score is not none else '—' }}</small>{{ res.resolution_summary }}</div>{% endif %}
+
+{% if t.asignado_a is none or es_sup %}<div class="actions">
+{% if t.asignado_a is none %}<form method="post" action="{{ url_for('tomar', tid=t.ticket_id) }}">{{ m.csrf_input() }}<button>Tomar este ticket</button></form>{% endif %}
+{% if es_sup %}<form method="post" action="{{ url_for('asignar', tid=t.ticket_id) }}" class="filters inline">{{ m.csrf_input() }}
+<select name="user_id" aria-label="Responsable"><option value="">Sin asignar</option>{% for a in agentes %}<option value="{{a.user_id}}" {{ 'selected' if a.user_id==t.asignado_a }}>{{a.nombre}} ({{ ROL_ES[a.rol] }})</option>{% endfor %}</select>
+<button class="ghost">Reasignar</button></form>{% endif %}</div>{% endif %}</div>
+
+<div class="card"><h2>Registrar avance</h2>
+{% if puede %}
+<p class="sub">Guarda una nota y cambia el estado en un solo paso. Si algo falla, no se guarda nada.</p>
+<div class="help"><b>Desde «{{ ESTADOS[t.status] }}» puedes pasar a:</b>
+<div class="flow">{% for k in legales|sort %}{{ m.est(k) }}{% else %}<span class="dot">Ninguno: es un estado final.</span>{% endfor %}</div>
+Las opciones marcadas «no permitida» se dejan a propósito para demostrar que la base de datos rechaza transiciones inválidas.</div>
+<form method="post" action="{{ url_for('nota', tid=t.ticket_id) }}" class="form">{{ m.csrf_input() }}
+<label>Nuevo estado<select name="nuevo_estado">{% for k,l in ESTADOS.items() %}{% if k != t.status %}
+<option value="{{k}}">{{l}}{{ '' if k in legales else ' — no permitida' }}{{ ' — requiere supervisor' if (k=='closed_no_action' or (t.status=='resolved' and k=='in_progress')) and not es_sup else '' }}</option>{% endif %}{% endfor %}</select></label>
+<label>Nota de seguimiento<textarea name="texto" rows="3" required placeholder="¿Qué hiciste o qué encontraste?"></textarea></label>
+<div class="row2"><label>Horas invertidas <small>(vacío = se calcula solo)</small><input name="horas" type="number" step="0.01" min="0"></label>
+<label>CSAT del cliente <small>(0–5, solo al resolver)</small><input name="csat" type="number" min="0" max="5"></label></div>
+<div><button>Guardar avance</button></div></form>
+{% else %}<p class="sub">Este ticket está asignado a <b>{{ t.asignado_nombre }}</b>. Solo su responsable o un supervisor puede modificarlo.</p>{% endif %}</div>
+</div>
+
+<div class="card"><h2>Historial de seguimiento</h2><p class="sub">Cada nota queda registrada con su autor y el estado resultante</p>
+<div class="timeline">{% for n in notas %}<div class="note"><div class="meta"><b>{{ n.nombre or n.agente }}</b> {{ m.est(n.estado_resultante) }} <span class="sub">{{ n.creada_en }}</span></div><p>{{ n.texto }}</p></div>
+{% else %}<p class="sub" style="margin:0">Todavía no hay notas en este ticket.</p>{% endfor %}</div></div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}{% block title %}Panel · TicketFlow{% endblock %}{% block c %}
+{% import "_m.html" as m with context %}
+{% set mio = '' if es_sup else 'me' %}
+<div class="top"><div><h1>Hola, {{ user.nombre.split()[0] }}</h1>
+<p class="sub">{{ 'Resumen global del equipo de soporte.' if es_sup else 'Resumen de los tickets que tienes asignados.' }}</p></div>
+<div class="acts"><a class="btn ghost" href="{{ url_for('lista') }}">Ver todos los tickets</a><a class="btn" href="{{ url_for('nuevo') }}">{{ m.ico('plus') }}Nuevo ticket</a></div></div>
+
+<div class="kpis">
+  <div class="card kpi"><div class="kh"><em>Tickets abiertos</em><div class="chip">{{ m.ico('tickets') }}</div></div>
+    <b>{{ '{:,}'.format(kpi.abiertos) }}</b><span>Abiertos, en progreso o en espera</span>
+    <div class="foot"><span>Pendientes de resolver</span><a href="{{ url_for('lista', asignado=mio) }}">Ver →</a></div></div>
+  <div class="card kpi {{ 'bad' if kpi.vencidos else 'good' }}"><div class="kh"><em>SLA vencido</em><div class="chip">{{ m.ico('clock') }}</div></div>
+    <b>{{ '{:,}'.format(kpi.vencidos) }}</b><span>Superaron el tiempo prometido</span>
+    <div class="foot"><span>{{ (kpi.vencidos / kpi.abiertos * 100)|round|int if kpi.abiertos else 0 }}% de los abiertos</span><a href="{{ url_for('lista', vencidos=1, asignado=mio) }}">Ver →</a></div></div>
+  <div class="card kpi warn"><div class="kh"><em>Sin responsable</em><div class="chip">{{ m.ico('inbox') }}</div></div>
+    <b>{{ '{:,}'.format(sin_asignar) }}</b><span>Esperando que alguien los tome</span>
+    <div class="foot"><span>Cola de entrada</span><a href="{{ url_for('lista', status='open', asignado='none') }}">Ver →</a></div></div>
+  <div class="card kpi"><div class="kh"><em>Reabiertos</em><div class="chip">{{ m.ico('repeat') }}</div></div>
+    <b>{{ '{:,}'.format(kpi.reabiertos) }}</b><span>El problema volvió a aparecer</span>
+    <div class="foot"><span>{{ (kpi.reabiertos / kpi.total * 100)|round(1) if kpi.total else 0 }}% del total</span><a href="{{ url_for('lista', reabiertos=1, asignado=mio) }}">Ver →</a></div></div>
+  <div class="card kpi good"><div class="kh"><em>Satisfacción (CSAT)</em><div class="chip">{{ m.ico('star') }}</div></div>
+    <b>{{ csat if csat is not none else '—' }}<small style="font-size:15px;color:var(--mu);font-weight:500"> / 5</small></b><span>Promedio de tickets resueltos</span>
+    <div class="foot"><div class="bar ok" style="width:100%"><i style="width:{{ ((csat or 0)/5*100)|round|int }}%"></i></div></div></div>
+</div>
+
+<div class="grid">
+<div class="card pn"><div class="ch"><div><h2>Cumplimiento de SLA</h2><p class="sub">Resueltos dentro del tiempo prometido</p></div></div>
+<div class="rings">{% for r in sla_plan %}{% set v = (r.ok / r.n * 100)|round|int %}
+<div><div class="ring {{ '' if v>=70 else ('warn' if v>=45 else 'bad') }}" style="--v:{{v}}"><div>{{ v }}%</div></div><b>{{ r.plan|es }}</b><small>{{ '{:,}'.format(r.n) }} tickets</small></div>
+{% else %}<p class="sub">Sin datos.</p>{% endfor %}</div>
+<div class="legend"><span><i style="background:var(--ok)"></i>≥ 70%</span><span><i style="background:#f79009"></i>45–69%</span><span><i style="background:var(--er)"></i>&lt; 45%</span></div></div>
+
+<div class="card pn"><div class="ch"><div><h2>Abiertos por prioridad</h2><p class="sub">Clic en una fila para ver esos tickets</p></div></div>
+<div class="rank">{% set mx = por_prioridad.values()|list|max if por_prioridad else 1 %}{% for k,l in PRIORIDADES.items() %}{% set n = por_prioridad.get(k,0) %}
+<a class="rk p-{{k}}" style="background:none;color:var(--tx)" href="{{ url_for('lista', priority=k, asignado=mio) }}"><span class="lb">{{ l }}</span>
+<div class="bar"><i style="width:{{ (n/mx*100)|round|int if mx else 0 }}%"></i></div><span class="n">{{ '{:,}'.format(n) }}</span></a>{% endfor %}</div></div>
+
+<div class="card pn"><div class="ch"><div><h2>Tiempo de resolución</h2><p class="sub">Promedio por prioridad: lo urgente debe ir más rápido</p></div></div>
+<div class="rank">{% for k,l in PRIORIDADES.items() %}{% set t = tiempos.get(k) %}
+<div class="rk p-{{k}}"><span>{{ m.pri(k) }}</span><div class="bar"><i style="width:{{ (t.horas/60*100)|round|int if t else 0 }}%"></i></div><span class="n">{{ t.horas|horas if t else '—' }}</span></div>{% endfor %}</div></div>
+</div>
+
+<div class="grid">
+<div class="card pn"><div class="ch"><div><h2>¿Dónde enfocar recursos hoy?</h2><p class="sub">Tickets abiertos por área del producto</p></div></div>
+<div class="rank">{% for a in por_area %}
+<a class="rk" href="{{ url_for('lista', area=a.k, asignado=mio) }}"><span class="lb">{{ a.k|es }}</span>
+<div class="bar"><i style="width:{{ (a.n/por_area[0].n*100)|round|int }}%"></i></div><span class="n">{{ '{:,}'.format(a.n) }}</span></a>
+{% else %}<p class="sub">Sin tickets abiertos.</p>{% endfor %}</div></div>
+
+<div class="card pn"><div class="ch"><div><h2>Alertas inteligentes</h2><p class="sub">Tickets con SLA vencido o en riesgo · {{ '{:,}'.format(alertas_res.en_riesgo) }} en riesgo · {{ '{:,}'.format(alertas_res.vencido) }} vencidos</p></div><a class="more" href="{{ url_for('alertas') }}">Ver todas</a></div>
+<div class="urg">{% for a in alertas_top %}<a class="ur" href="{{ url_for('detalle', tid=a.ticket_id) }}"><span class="id">{{ a.ticket_id }}</span>{{ m.pri(a.priority) }}<span class="tag">{{ a.accion }}</span>
+<span class="sp"><span class="badge {{ 'vence' if a.estado_sla=='vencido' else 'p-high' }}">{{ 'Vencido' if a.estado_sla=='vencido' else 'En riesgo' }}</span></span></a>
+{% else %}<p class="sub" style="text-align:center;padding:18px 0;margin:0">Sin alertas: todo va dentro del SLA.</p>{% endfor %}</div></div>
+<div class="card pn"><div class="ch"><div><h2>Tus tickets más urgentes</h2><p class="sub">Primero los vencidos, luego por prioridad</p></div>
+<a class="more" href="{{ url_for('lista', asignado='me') }}">Ver todos</a></div>
+<div class="urg">{% for t in pendientes %}<a class="ur" href="{{ url_for('detalle', tid=t.ticket_id) }}"><span class="id">{{ t.ticket_id }}</span>{{ m.pri(t.priority) }}
+<span class="sp">{% if t.horas_abierto > t.objetivo %}<span class="badge vence">Vencido</span>{% else %}<span class="dot">{{ (t.objetivo - t.horas_abierto)|horas }} restantes</span>{% endif %}</span></a>
+{% else %}<p class="sub" style="text-align:center;padding:18px 0;margin:0">No tienes tickets abiertos asignados.<br>Toma uno desde «Tickets».</p>{% endfor %}</div></div>
+</div>
+
+{% if es_sup %}
+<div class="grid">
+<div class="card pn scroll"><div class="ch"><div><h2>Carga por agente</h2><p class="sub">Quién tiene qué trabajo y qué tan rápido resuelve</p></div></div>
+<table><tr><th>Agente</th><th class="num">Abiertos</th><th class="num">Resueltos</th><th class="num">Tiempo medio</th></tr>
+{% for a in por_agente %}<tr><td><a class="ag" href="{{ url_for('lista', asignado=a.user_id) }}"><span class="avatar">{{ a.nombre[:1] }}</span>{{ a.nombre }}</a></td>
+<td class="num">{{ '{:,}'.format(a.abiertos or 0) }}</td><td class="num">{{ '{:,}'.format(a.resueltos or 0) }}</td><td class="num">{{ a.horas|horas }}</td></tr>{% endfor %}</table></div>
+
+<div class="card pn"><div class="ch"><div><h2>Cuentas en riesgo</h2><p class="sub">Clientes con más de un ticket reabierto</p></div><a class="more" href="{{ url_for('riesgo') }}">Ver todas</a></div>
+<div class="rank">{% for r in riesgo %}<a class="rk" style="grid-template-columns:1fr auto" href="{{ url_for('lista', customer=r.customer_id) }}"><span class="lb">{{ r.customer_id }}</span>
+<span class="badge {{ 'p-urgent' if r.reaperturas>=4 else ('p-high' if r.reaperturas==3 else 'p-medium') }}">{{ r.reaperturas }} reaperturas</span></a>{% endfor %}</div></div>
+</div>
+
+<div class="card pn"><div class="ch"><div><h2>Tickets creados por mes</h2><p class="sub">Últimos 12 meses del dataset · pasa el cursor sobre un punto para ver el total</p></div></div>
+<div class="chart"><svg class="spark" viewBox="0 0 660 140" role="img" aria-label="Tickets por mes">
+<line class="gl" x1="20" x2="640" y1="20" y2="20"/><line class="gl" x1="20" x2="640" y1="65" y2="65"/><line class="gl" x1="20" x2="640" y1="110" y2="110"/>
+<polygon class="a" points="{% for mes,n,x,y in tendencia %}{{x}},{{y}} {% endfor %}{{ tendencia[-1][2] }},110 {{ tendencia[0][2] }},110"/>
+<polyline fill="none" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" points="{% for mes,n,x,y in tendencia %}{{x}},{{y}} {% endfor %}"/>
+{% for mes,n,x,y in tendencia %}<circle class="pt" cx="{{x}}" cy="{{y}}" r="4" fill="var(--card)" stroke="var(--ac)" stroke-width="2.2"><title>{{mes}}: {{n}} tickets</title></circle>
+{% if loop.last %}<text class="vl" x="{{x}}" y="{{y-9}}" text-anchor="middle">{{ '{:,}'.format(n) }}</text>{% endif %}
+<text x="{{x}}" y="130" text-anchor="middle">{{ mes[2:] }}</text>{% endfor %}</svg></div></div>
+{% endif %}
+{% endblock %}
